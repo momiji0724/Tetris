@@ -8,6 +8,9 @@ using UnityEngine.Assemblies;
 
 public class GameManagement : MonoBehaviour
 {
+    public int clearedLines;
+    public bool isClear;
+
     public TextMeshProUGUI scoreText;
 
     public int currentScore;
@@ -15,7 +18,7 @@ public class GameManagement : MonoBehaviour
 
     public TextMeshProUGUI timerText;
 
-    public float gameTime = 60f;
+    public float gameTime = 0f;
     int seconds;
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
@@ -36,21 +39,28 @@ public class GameManagement : MonoBehaviour
     public void AddScore()
     {
         currentScore += 100;
+        clearedLines++;
+
 
         scoreText.text = "Score: " + currentScore.ToString();
 
-        Debug.Log(currentScore);
+        //Debug.Log(currentScore);
 
         if(currentScore >= clearScore) 
         {
+            isClear = true;
             GameClear();
         }
 
     }
     public void GameOver()
     {
+        PlayerPrefs.SetInt("Score", currentScore);
+        PlayerPrefs.SetInt("ClearedLines", clearedLines);
+        PlayerPrefs.SetFloat("Time", gameTime);
+        PlayerPrefs.SetString("Result", "GameOver");
 
-        SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+        SceneManager.LoadScene("ResultScene");
 
     }
 
@@ -59,23 +69,22 @@ public class GameManagement : MonoBehaviour
     public void GameClear()
     {
 
-        SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+        PlayerPrefs.SetInt("Score", currentScore);
+        PlayerPrefs.SetInt("ClearedLines", clearedLines);
+        PlayerPrefs.SetFloat("Time", gameTime);
+        PlayerPrefs.SetString("Result", "GameOver");
+
+        SceneManager.LoadScene("ResultScene");
+
 
     }
     public void TimeManagement()
     {
-        gameTime -= Time.deltaTime;
-        seconds = (int)gameTime;
+        gameTime += Time.deltaTime;
 
-        if (seconds >= 0 && timerText != null)
-        {
-            timerText.text = seconds.ToString();
-        }
+        int minutes = (int)gameTime / 60;
+        int seconds = (int)gameTime % 60;
 
-        if (seconds <= 0)
-        {
-            Debug.Log("TimeOut");
-            GameOver();
-        }
+        timerText.text = minutes.ToString("00") + " : " + seconds.ToString("00");
     }
 }

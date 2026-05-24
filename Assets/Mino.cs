@@ -1,10 +1,12 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
-using static Unity.VisualScripting.Metadata;
 
-public class Mino:MonoBehaviour
+public class Mino : MonoBehaviour
 {
+    private float horizontalTimer;
+    public float horizontalInterval = 0.1f;
+    private float downTimer;
+    public float downInterval = 0.05f;
+
     public float previousTime;
     // mino‚Ì—Ž‚¿‚éŽžŠÔ
     public float fallTime = 1f;
@@ -24,55 +26,148 @@ public class Mino:MonoBehaviour
     {
         MinoMovement();
     }
-    
+
     private void MinoMovement()
     {
-        if (Input.GetKeyDown(KeyCode.LeftArrow) || Input.GetKeyDown(KeyCode.A)) 
+        horizontalTimer += Time.deltaTime;
+
+        if (horizontalTimer >= horizontalInterval)
         {
-            transform.position += new Vector3(-1, 0, 0);
-            if (!VaildMovement()) 
+            if (Input.GetKey(KeyCode.LeftArrow) || Input.GetKey(KeyCode.A))
             {
-                transform.position -= new Vector3(-1, 0, 0);
+                transform.position += new Vector3(-1, 0, 0);
+
+                if (!ValidMovement())
+                {
+                    transform.position -= new Vector3(-1, 0, 0);
+                }
+
+
+                horizontalTimer = 0;
+
+            }
+
+            else if (Input.GetKey(KeyCode.RightArrow) || Input.GetKey(KeyCode.D))
+            {
+                transform.position += new Vector3(1, 0, 0);
+
+                if (!ValidMovement())
+                {
+                    transform.position -= new Vector3(1, 0, 0);
+                }
+
+                horizontalTimer = 0;
+
             }
         }
-        if(Input.GetKeyDown(KeyCode.RightArrow) || Input.GetKeyDown(KeyCode.D))
+        if (Time.time - previousTime >= fallTime)
         {
-            transform.position += new Vector3(1, 0, 0);
-
-            if (!VaildMovement())
-            {
-                transform.position -= new Vector3(1, 0, 0);
-            }
-
-        }
-
-        if (Input.GetKeyDown(KeyCode.DownArrow) || Input.GetKeyDown(KeyCode.S) || Time.time-previousTime >= fallTime) 
-        {
-            transform.position += new Vector3(0, -1, 0);
-            if (!VaildMovement())
-            {
-                transform.position -= new Vector3(0, -1, 0);
-
-                AddToGrid();
-                CheckLines();
-
-                this.enabled = false;
-                FindObjectOfType<SpawnMino>().NewMino();
-            }
-
+            MoveDown();
             previousTime = Time.time;
+
         }
-        if(Input.GetKeyDown(KeyCode.Space))
+
+        downTimer += Time.deltaTime;
+        if (downTimer >= downInterval)
         {
-            transform.RotateAround(transform.TransformPoint(rotationPoint),new Vector3(0,0,1),90);
+            if (Input.GetKey(KeyCode.DownArrow) || Input.GetKey(KeyCode.S))
+            {
+                MoveDown();
+            }
+
+            downTimer = 0;
+        }
+
+
+
+        if (Input.GetKeyDown(KeyCode.UpArrow) || Input.GetKeyDown(KeyCode.W))
+        {
+            while (true)
+            {
+                transform.position += new Vector3(0, -1, 0);
+
+                if (!ValidMovement())
+                {
+                    transform.position -= new Vector3(0, -1, 0);
+                    break;
+                }
+
+            }
+            AddToGrid();
+            CheckLines();
+
+            this.enabled = false;
+            FindObjectOfType<SpawnMino>().NewMino();
+
+
+
+        }
+
+        if (Input.GetKeyDown(KeyCode.Space))
+        {
+            Vector3 oldPosition = transform.position;
+            Quaternion oldRotation = transform.rotation;
+
+            transform.RotateAround
+                (transform.TransformPoint(rotationPoint),
+                new Vector3(0, 0, 1),
+                90);
+
+            transform.position = new Vector3
+                (
+                    Mathf.Round(transform.position.x),
+                    Mathf.Round(transform.position.y),
+                    0
+                );
+
+
+            if (ValidMovement())
+            {
+                return;
+            }
+
+            transform.position += Vector3.right;
+
+            if (ValidMovement())
+            {
+                return;
+            }
+
+            transform.position += Vector3.left * 2;
+            if (ValidMovement())
+            {
+                return;
+            }
+
+            transform.position = oldPosition;
+            transform.rotation = oldRotation;
+
+        }
+
+
+
+    }
+
+    public void MoveDown()
+    {
+        transform.position += new Vector3(0, -1, 0);
+        if (!ValidMovement())
+        {
+            transform.position -= new Vector3(0, -1, 0);
+
+            AddToGrid();
+            CheckLines();
+
+            this.enabled = false;
+            FindObjectOfType<SpawnMino>().NewMino();
         }
     }
 
-    public void CheckLines() 
+    public void CheckLines()
     {
         for (int i = height - 1; i >= 0; i--)
         {
-            if (HasLine(i)) 
+            if (HasLine(i))
             {
                 DeleteLine(i);
                 RowDown(i);
@@ -86,32 +181,32 @@ public class Mino:MonoBehaviour
     {
         for (int j = 0; j < width; j++)
         {
-            if (grid[j, i] == null) 
+            if (grid[j, i] == null)
             {
                 return false;
             }
         }
-        
+
 
         return true;
     }
 
-    void DeleteLine(int i) 
+    void DeleteLine(int i)
     {
-        for(int j =0; j < width; j++) 
+        for (int j = 0; j < width; j++)
         {
             Destroy(grid[j, i].gameObject);
             grid[j, i] = null;
         }
     }
 
-    public void RowDown(int i) 
+    public void RowDown(int i)
     {
-        for(int y = i; y< height; y++) 
+        for (int y = i; y < height; y++)
         {
-            for(int j =0; j<width; j++) 
+            for (int j = 0; j < width; j++)
             {
-                if (grid[j,y]!= null) 
+                if (grid[j, y] != null)
                 {
                     grid[j, y - 1] = grid[j, y];
                     grid[j, y] = null;
@@ -121,37 +216,76 @@ public class Mino:MonoBehaviour
         }
     }
 
-    void AddToGrid() 
+    void AddToGrid()
     {
-        foreach(Transform children in transform) 
+        foreach (Transform children in transform)
         {
             int roundX = Mathf.RoundToInt(children.position.x);
             int roundY = Mathf.RoundToInt(children.position.y);
 
-            grid[roundX,roundY] = children;
-
-            if(roundY >= height - 1) 
+            if(roundX >= 0 && roundX < width &&
+               roundY >= 0 && roundX < height) 
             {
-                FindObjectOfType<GameManagement>().GameOver();
+                grid[roundX, roundY] = children;
             }
+            
+
+            
         }
     }
 
-    bool VaildMovement() 
+    //void UpdateGrid() 
+    //{
+    //    RemoveFromGrid();
+
+    //    foreach(Transform child in transform) 
+    //    {
+    //        int x = Mathf.RoundToInt(child.position.x);
+    //        int y = Mathf.RoundToInt(child.position.y);
+
+    //        if (x >= 0 && x < width && y >= 0 && y < height)
+    //        {
+    //                grid[x, y] = child;
+    //        }
+    //    }
+    //}
+
+    //void RemoveFromGrid() 
+    //{
+    //    foreach (Transform child in transform) 
+    //    {
+    //        int x = Mathf.RoundToInt(child.position.x);
+    //        int y = Mathf.RoundToInt(child.position.y);
+
+    //        if(x >= 0 && x < width && y>= 0 && y < height)
+    //        {
+    //            if (grid[x,y]== child) 
+    //            {
+    //                grid[x,y] = null;
+    //            }
+    //        }
+    //    }
+    //}
+
+    public bool ValidMovement()
     {
-        foreach (Transform children in transform) 
+        foreach (Transform children in transform)
         {
             int roundX = Mathf.RoundToInt(children.transform.position.x);
             int roundY = Mathf.RoundToInt(children.transform.position.y);
 
-            if(roundX < 0 || roundX >= width || roundY < 0 || roundY >= height) 
+            if (roundX < 0 || roundX >= width || roundY < 0)
             {
                 return false;
             }
-            if (grid[roundX,roundY]!= null) 
+            if (roundY < height)
             {
-                return false;
+                if (grid[roundX, roundY] != null)
+                {
+                    return false;
+                }
             }
+
         }
         return true;
     }
