@@ -139,9 +139,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 29d957ad95a03f942bba4041f959d7f3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Mino
+  horizontalInterval: 0.1
+  downInterval: 0.05
   previousTime: 0
   fallTime: 1
   rotationPoint: {x: 0, y: 0, z: 0}
+  lockDelay: 0.5
+  ghostPrefab: {fileID: 745424195611178617, guid: 81ec42555adce88499fe873d7117e668, type: 3}
 --- !u!1 &3403816593335819451
 GameObject:
   m_ObjectHideFlags: 0

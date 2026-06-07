@@ -24,6 +24,7 @@ public class GameManagement : MonoBehaviour
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
+        Mino.ClearGrid();
         Initialize();
     }
 
@@ -72,7 +73,7 @@ public class GameManagement : MonoBehaviour
         PlayerPrefs.SetInt("Score", currentScore);
         PlayerPrefs.SetInt("ClearedLines", clearedLines);
         PlayerPrefs.SetFloat("Time", gameTime);
-        PlayerPrefs.SetString("Result", "GameOver");
+        PlayerPrefs.SetString("Result", "GameClear");
 
         SceneManager.LoadScene("ResultScene");
 
