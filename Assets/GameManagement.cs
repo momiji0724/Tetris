@@ -9,17 +9,16 @@ using UnityEngine.Assemblies;
 public class GameManagement : MonoBehaviour
 {
     public int clearedLines;
-    public bool isClear;
-
     public TextMeshProUGUI scoreText;
-
     public int currentScore;
-    public int clearScore = 1500;
+
+    [Header("Level Settings")]
+    public TextMeshProUGUI levelText;
+    public int currentLevel = 1;
 
     public TextMeshProUGUI timerText;
-
     public float gameTime = 0f;
-    int seconds;
+    
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
@@ -37,48 +36,66 @@ public class GameManagement : MonoBehaviour
     {
         currentScore =0;
     }
-    public void AddScore()
+    public void AddScore(int lines)
     {
-        currentScore += 100;
-        clearedLines++;
+        if (lines <= 0) return;
+
+        currentScore += lines * 100;
+        clearedLines += lines;
 
 
         scoreText.text = "Score: " + currentScore.ToString();
 
         //Debug.Log(currentScore);
 
-        if(currentScore >= clearScore) 
+        // 10列消すとゲームレベルがアップ
+        int newLevel = (clearedLines / 10) + 1;
+
+        if(newLevel > currentLevel) 
         {
-            isClear = true;
-            GameClear();
+            currentLevel = newLevel;
+            UpDateLevelUI();
+            Debug.Log($"レベルアップ！現在のレベル:{currentLevel}");
+
+            Mino activeMino = FindObjectOfType<Mino>();
+            if(activeMino != null) 
+            {
+                activeMino.UpdateFallTimeByLevel(currentLevel);
+            }
+            
         }
 
     }
+    private void UpDateLevelUI() 
+    {
+        if(levelText != null) 
+        {
+            levelText.text = "Level: " + currentLevel.ToString();
+        }
+    }
     public void GameOver()
     {
-        PlayerPrefs.SetInt("Score", currentScore);
-        PlayerPrefs.SetInt("ClearedLines", clearedLines);
-        PlayerPrefs.SetFloat("Time", gameTime);
-        PlayerPrefs.SetString("Result", "GameOver");
+        Mino actionMino = FindObjectOfType<Mino>();
+        if(actionMino != null) 
+        {
+            actionMino.enabled = false;
+        }
 
-        SceneManager.LoadScene("ResultScene");
+        StartCoroutine(Mino.ChangeGridToGrayAnimation(() =>
+        {
+            PlayerPrefs.SetInt("Score", currentScore);
+            PlayerPrefs.SetInt("ClearedLines", clearedLines);
+            PlayerPrefs.SetInt("Level", currentLevel);
+            PlayerPrefs.SetFloat("Time", gameTime);
+            PlayerPrefs.SetString("Result", "GameOver");
+
+            SceneManager.LoadScene("ResultScene");
+        }));
 
     }
 
     // GameClearした時の処理
     // 今回の追加
-    public void GameClear()
-    {
-
-        PlayerPrefs.SetInt("Score", currentScore);
-        PlayerPrefs.SetInt("ClearedLines", clearedLines);
-        PlayerPrefs.SetFloat("Time", gameTime);
-        PlayerPrefs.SetString("Result", "GameClear");
-
-        SceneManager.LoadScene("ResultScene");
-
-
-    }
     public void TimeManagement()
     {
         gameTime += Time.deltaTime;

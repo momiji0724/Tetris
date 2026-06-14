@@ -1,3 +1,5 @@
+using JetBrains.Annotations;
+using System.Collections;
 using System.IO.IsolatedStorage;
 using Unity.VisualScripting;
 using UnityEngine;
@@ -37,6 +39,12 @@ public class Mino : MonoBehaviour
 
     void Start()
     {
+        GameManagement gameManager = FindObjectOfType<GameManagement>();
+        if(gameManager != null) 
+        {
+            UpdateFallTimeByLevel(gameManager.currentLevel);
+        }
+
         if(this.enabled && ghostPrefab != null) 
         {
             ghostObject = Instantiate(ghostPrefab, transform.position, transform.rotation);
@@ -335,17 +343,26 @@ public class Mino : MonoBehaviour
     }
     public void CheckLines()
     {
+        int linesClearedThisTurn = 0;
+
+
         for (int i = height - 1; i >= 0; i--)
         {
             if (HasLine(i))
             {
                 DeleteLine(i);
                 RowDown(i);
-                FindObjectOfType<GameManagement>().AddScore();
+                linesClearedThisTurn++;
                 i++;
             }
         }
+
+        if(linesClearedThisTurn > 0) 
+        {
+            FindObjectOfType<GameManagement>().AddScore(linesClearedThisTurn);
+        }
     }
+
 
     bool HasLine(int i)
     {
@@ -461,6 +478,44 @@ public class Mino : MonoBehaviour
             }
         }
         return true;
+    }
+
+    public static IEnumerator ChangeGridToGrayAnimation(System.Action onComplete) 
+    {
+        for(int y = 0; y < height; y++) 
+        {
+            bool rowHasBlock = false;
+
+            for (int x = 0; x < width; x++) 
+            {
+                if (grid[x,y]!= null) 
+                {
+                    SpriteRenderer sr = grid[x, y].GetComponent<SpriteRenderer>();
+                    if(sr != null) 
+                    {
+                        sr.color = Color.gray;
+                        rowHasBlock = true;
+                    }
+                }
+            }
+
+            if (rowHasBlock) 
+            {
+                yield return new WaitForSeconds(0.05f);
+            }
+        }
+
+        yield return new WaitForSeconds(0.5f);
+
+        onComplete?.Invoke();
+
+        
+    }
+    public void UpdateFallTimeByLevel(int level)
+    {
+        float calculatedTime = 1.0f - ((level - 1) * 0.1f);
+
+        fallTime = Mathf.Max(calculatedTime, 0.05f);
     }
 }
 
